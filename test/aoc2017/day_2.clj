@@ -35,11 +35,24 @@
 
 ;;;
 
-(calculate-spreadsheet-checksum input) ;; => 34581
+(calculate-spreadsheet-checksum-1 input) ;; => 34581
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn calculate-spreadsheet-checksum-2
   [sheet]
   (->> sheet
-       ))
+       (map (fn [row] (for [a row b row] (vector a b))))
+       (map (partial map (fn [[a b]] (let [x (/ a b)] (when (and (= (type x) java.lang.Long) (pos? x)) x)))))
+       (map (partial keep identity))
+       (map (partial apply max))
+       (reduce +)))
+
+(deftest example-1
+  (is (= 9 (calculate-spreadsheet-checksum-2 [[5 9 2 8]
+                                              [9 4 7 3]
+                                              [3 8 6 5]]))))
+
+;;;
+
+(calculate-spreadsheet-checksum-2 input);; => 214
