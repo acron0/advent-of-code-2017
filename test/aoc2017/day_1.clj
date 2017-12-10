@@ -25,8 +25,8 @@
   (is (= 9 (calculate-captcha-1 [9 1 2 1 2 1 2 9]))))
 
 ;;;
-
-(calculate-captcha-1 input) ;; => 1069
+(deftest result-1
+  (is (= 1069 (calculate-captcha-1 input))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -59,4 +59,5 @@
 
 ;;;
 
-(calculate-captcha-2 input) ;; => 1268
+(deftest result-2
+  (is (= 1268 (calculate-captcha-2 input))))

@@ -13,6 +13,8 @@
 ;; 72  43  44  45  46  47  48  49  50
 ;; 73  74  75  76  77  78  79  80  81
 
+(def input 312051)
+
 (defn circle-start
   "(2n+1)^2"
   [n]
@@ -59,5 +61,7 @@
   (is (= 2 (distance 23)))
   (is (= 31 (distance 1024))))
 
-(deftest distance-result
-  (is (= 430 (distance 312051))))
+;;;
+
+(deftest result-1
+  (is (= 430 (distance input))))

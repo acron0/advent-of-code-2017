@@ -35,7 +35,8 @@
 
 ;;;
 
-(calculate-spreadsheet-checksum-1 input) ;; => 34581
+(deftest result-1
+  (is (= 34581 (calculate-spreadsheet-checksum-1 input))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -55,4 +56,5 @@
 
 ;;;
 
-(calculate-spreadsheet-checksum-2 input);; => 214
+(deftest result-2
+  (is (= 214 (calculate-spreadsheet-checksum-2 input))))
