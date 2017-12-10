@@ -65,3 +65,74 @@
 
 (deftest result-1
   (is (= 430 (distance input))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn grid
+  [d]
+  {:pre [(odd? d)]}
+  {:dim d
+   :center [(int (/ d 2)) (int (/ d 2))]
+   :cells (vec (repeat (* d d) 0))})
+
+(defn gget
+  [{:keys [dim cells] :as g} x y]
+  (if (or (>= x dim) (>= y dim))
+    nil
+    (let [index (+ (* y dim) x)]
+      (nth cells index))))
+
+(defn gset
+  [{:keys [dim cells] :as g} x y v]
+  {:pre [(< x dim) (< y dim)]}
+  (let [index (+ (* y dim) x)]
+    (update g :cells assoc index v)))
+
+(defn print-grid
+  [{:keys [dim cells] :as g}]
+  (for [r (range dim)]
+    (println (apply str (map #(format "%6d" (gget g % r)) (range dim))))))
+
+(defn get-surrounding-sum
+  [g x y]
+  (let [coords [[(dec x) (dec y)] [x (dec y)] [(inc x) (dec y)]
+                [(dec x) y] [(inc x) y]
+                [(dec x) (inc y)] [x (inc y)] [(inc x) (inc y)]]
+        result (apply + (keep (partial apply gget g) coords))]
+    (if (zero? result)
+      1
+      result)))
+
+(defn walk-grid
+  [input grd]
+  (let [[start-x start-y] (:center grd)]
+    (loop [g grd
+           x start-x
+           y start-y
+           turns 1
+           moves 1]
+      (loop [m moves g' g x' x y' y]
+        (let [surrounding-sum (get-surrounding-sum g' x y)
+              _ (println "x=" x' "y=" y' "m=" m "sum="surrounding-sum)
+              new-g (gset g' x' y' surrounding-sum)
+              [new-x new-y]
+              (case (mod turns 4)
+                0 [(inc x) y]
+                1 [x (inc y)]
+                2 [(dec x) y]
+                3 [x (dec y)])]
+          (if (zero? m)
+            {;; TODO ;;
+             }
+            (recur (dec m) new-g new-x new-y))))
+      (if (> surrounding-sum input)
+        new-g
+        (recur new-g new-x new-y new-t new-m)))))
+
+(deftest gget-tests
+  (is (= 3  (gget {:dim 2,  :cells (range 0 4)}   1 1)))
+  (is (= 20 (gget {:dim 20, :cells (range 0 400)} 0 1)))
+  (is (= 21 (gget {:dim 20, :cells (range 0 400)} 1 1))))
+
+(deftest example-1
+  (walk-grid input (grid 3)))
