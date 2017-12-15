@@ -77,7 +77,7 @@
 
 (defn gget
   [{:keys [dim cells] :as g} x y]
-  (if (or (>= x dim) (>= y dim))
+  (if (or (>= x dim) (>= y dim) (< x 0) (< y 0))
     nil
     (let [index (+ (* y dim) x)]
       (nth cells index))))
@@ -89,9 +89,13 @@
     (update g :cells assoc index v)))
 
 (defn print-grid
-  [{:keys [dim cells] :as g}]
-  (for [r (range dim)]
-    (println (apply str (map #(format "%6d" (gget g % r)) (range dim))))))
+  ([g]
+   (print-grid g 8))
+  ([{:keys [dim cells] :as g} n]
+   (doall
+    (for [r (range dim)]
+      (println (apply str (map #(format (str "%" n "d") (gget g % r)) (range dim))))))
+   nil))
 
 (defn get-surrounding-sum
   [g x y]
@@ -103,36 +107,69 @@
       1
       result)))
 
-(defn walk-grid
-  [input grd]
-  (let [[start-x start-y] (:center grd)]
-    (loop [g grd
-           x start-x
-           y start-y
-           turns 1
-           moves 1]
-      (loop [m moves g' g x' x y' y]
-        (let [surrounding-sum (get-surrounding-sum g' x y)
-              _ (println "x=" x' "y=" y' "m=" m "sum="surrounding-sum)
-              new-g (gset g' x' y' surrounding-sum)
-              [new-x new-y]
-              (case (mod turns 4)
-                0 [(inc x) y]
-                1 [x (inc y)]
-                2 [(dec x) y]
-                3 [x (dec y)])]
-          (if (zero? m)
-            {;; TODO ;;
-             }
-            (recur (dec m) new-g new-x new-y))))
-      (if (> surrounding-sum input)
-        new-g
-        (recur new-g new-x new-y new-t new-m)))))
+(defn turn->process
+  [turns]
+  (case (mod turns 4)
+    0 [1 0]
+    1 [0 -1]
+    2 [-1 0]
+    3 [0 1]))
+
+(defn plan-walk
+  [grid]
+  (let [cells (* (:dim grid) (:dim grid))
+        all-moves (take cells (map (comp (partial repeat 2) inc) (range)))
+        ;; there's probably an algorithm for this bit
+        [_ limit] (reduce (fn [[s m :as a] i]
+                            (let [s' (+ s i)]
+                              (if (<= s' cells)
+                                [s' (inc m)] a))) [0 0] (flatten all-moves))]
+    (loop [moves all-moves
+           turns 0
+           agg []]
+      (let [[new-turns new-agg]
+            (loop [move (first moves)
+                   turns turns
+                   agg agg]
+              (let [t (inc turns)
+                    a (conj agg [(first move) (turn->process turns)])]
+                (if (next move)
+                  (recur (next move) t a)
+                  [t a])))]
+        (if (next moves)
+          (recur (next moves) new-turns new-agg)
+          (take limit new-agg))))))
+
+(defn make-grid
+  [n]
+  (let [grid (grid n)
+        plan (plan-walk grid)]
+    (loop [plan plan
+           grid grid
+           [x y] (:center grid)]
+      (let [[moves [diff-x diff-y]] (first plan)
+            r (reduce
+               (fn [{:keys [grid x y] :as a} _]
+                 (let [sum (get-surrounding-sum grid x y)]
+                   (assoc a
+                          :grid (gset grid x y sum)
+                          :x (+ x diff-x)
+                          :y (+ y diff-y))))
+               {:grid grid :x x :y y}
+               (range moves))]
+        (if (next plan)
+          (recur (next plan) (:grid r) [(:x r) (:y r)])
+          (:grid r))))))
+
+(defn check-grid
+  [input grid]
+  (let [ordered (vec (reverse (sort (:cells grid))))]
+    (last (take-while #(> % input) ordered))))
 
 (deftest gget-tests
   (is (= 3  (gget {:dim 2,  :cells (range 0 4)}   1 1)))
   (is (= 20 (gget {:dim 20, :cells (range 0 400)} 0 1)))
   (is (= 21 (gget {:dim 20, :cells (range 0 400)} 1 1))))
 
-(deftest example-1
-  (walk-grid input (grid 3)))
+(deftest result-2
+  (is (= 312453 (check-grid input (make-grid 9)))))
