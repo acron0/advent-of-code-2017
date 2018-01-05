@@ -6,7 +6,7 @@
 (def input
   (-> (io/resource "day-7-input")
       (slurp)
-      (str/split #"\n")))
+      (str/split-lines)))
 
 ;;
 
